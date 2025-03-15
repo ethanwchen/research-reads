@@ -1,4 +1,4 @@
-# Attention Is All You Need
+# Attention Is All You Need (2017)
 
 ## Intro
 
@@ -92,4 +92,85 @@ The decoder is responsible for generating the output sequence step by step. It r
 - Residual Connections & Layer Normalization: improves gradient flow and stability
 
 The auto-regressive generation is the decoder generating one word at a time. It feeds the previously generated words as input for predicting the next word. This ensures a natural sequence structure. The final output is the decoder outputting a probability distribution over the vocabulary and the model picks the most likely next word. This is fully parallelizable, better at long-range dependencies, and are scalable for modern NLP models like GPT and BERT.
+
+## Feedforward Networks, Layer Normalization, and Residual Conncections
+
+### Feedforward Networks
+
+After self-attention is applied, each token's representation is passed through a fully connected feedforward neetwork that consists of: 
+
+- a linear transformation with learned weights
+- a non-linear activation function to introduce non-linearity
+- another linear transformation to transform the representation back to the original dimension
+
+Mathematically,
+$FFN(x) = max(0, xW_{1}+b_{1})W_{2}+b_{2}$
+
+where $W_{1}$ and $W_{2}$ are learnable weight matrices. $b_{1}$ and $b_{2}$ are biases. max($0,x$) represents the ReLu activation function.
+
+Each position in the sequence goes through this transformation independently and this is why it is called a position wise feedforward network. It is important because it introduces non-linearity and makes the model more expressive. This ensures that each token gets an additional transformation beyond self attention. Since it operates independently on each position, it is highly efficient.
+
+### Layer Normalization
+
+Deep neural networks often suffer from unstable training due to varying activation values. To address this, the Transformer normalizes inputs across all features. 
+
+For an input vector $x$: 
+
+LayerNorm(x) = $\frac{x-\mu}{\sigma} \dot \gamma + \Beta$
+
+where $\mu$ and $\sigma$ are the mean and SD of the features. $\gamma$ and $\Beta$ are learnable scaling and shifting parameters.
+
+What normalizing the layer does is stabilize training by keeping activation values within a consistent range, prevent exploding and vanishing gradients in deep networks, and ensures smooth gradient flow, which leads to faster and more reliable convergence.
+
+## Residual Connections
+
+Since the Transformer is deep, residual connections are added to help gradients flow smoothly during backpropagation. 
+
+Each self-attention layer and feedforward network has a residual connection where the original input x is added to the output of the layer. This is used to prevent vanishing gradients and speeds up convergence. Each layer can then learn incremental refinements rather than replacing information entirely.
+
+Every encoder and decoder layer basically follows this structure.
+
+### Summary
+
+Basically, FFN adds depth and non-linearity. After relationships between words are extracted by self-attention, the FFN processes each token individually to add transformations and complexity to the model. Think of self-attention as finding relevant words and FFN as interpreting their meaning in context.
+
+This is important because self-attention only mixes word representations but doesn't transform them non-linearly. Using ReLU activation, FFN introduces non-linearity so that the model can learn complex relationships. 
+
+On the other hand, layer normalization stabilizes training. It normalizes the activations in a layer so they have zero mean and unit variance. This makes sure that the model's activations stay in a stable range, preventing training instabilities. 
+
+Basically if activations grow too large or small, the training becomes unstable. By normalizing the layer, training becomes faster and smoother.
+
+Finally, residual connections are great because they add the original input back to the output of a layer, which makes sure that the information is not lost. Without residual connections, deep networks can lose information as it passes through many layers. This lets the model preserve useful information while adding new transformations.
+
+## Transformer Training
+
+### Loss Function
+
+Since the Transformer is used for tasks like machine translation, it operates as sequence to sequence model, predicting words one step at a time. To evaluate the performance, we use Cross-Entropy Loss to measure how well the predicted probability distribution matches the correct target words.
+
+For each output word in the sequence, the loss is calculation as:
+
+$L = - \sum^{N}_{i=1}y_{i}log(\hat{y}_{i})$
+
+where $y_{i}$ is the true word (one hot encoded), $\hat{y}_{i}$ is the predicted probability for that word, and $N$ is the total number of words in the sequence.
+
+Since the transformer is an auto-regressive model (predicting words one by one), training requires what is called "Teacher Forcing". During training, the model is fed the correct previous words instead of its own predicted word. This accelerates learning because errors do not compound early on.
+
+The Adam Optimizer is also then used to update model weights, but Transformers require a special learning rate schedule. They start with a low learning rate and gradually increase it during warmup before decaying it over time.
+
+Since the Transformer is also computationally expensive, optimizations are needed. For example, Tensor Parallelism splits large matrix multiplications across multiple GPUs. This is used in large-scale models like GPT-3 to distribute computation. Instead of updating wieghts every batch, wwe can also try updating every few batches (gradient accumulation).
+
+## Transformer Variants
+
+Since the original Transformer model was introduced, there have been several variants and improvements to make it faster and specialized for different tasks.
+
+### BERT (2018)
+
+This is an encoder-only Transformer designed for understanding text context. Unlike the original Transformer, which processes input either left to right or right to left, BERT processes entire sentences bidirectionally.
+
+BERT is great for NLP tasks that require deep understanding like sentiment analysis and question answering. Pre-trained on large corpora and fine tuned for specific applications as well.
+
+### GPT (Generative Pretrained Transformer (2018))
+
+This is a decoder only Transformer, optimized for text generation. GPT is unidirectional and predicts words sequentially. This has created text generation with things like ChatGPT and Claude. It also scales well and has formed the foundation for instruction-tuned models.
 
