@@ -1,4 +1,4 @@
-## GraphSAGE - Inductive Representation Learning on Large Graphs 
+## GraphSAGE - Inductive Representation Learning on Large Graphs (2017)
 
 This focuses on inductive node embedding. Unlike traditional embedding appraoches that are based on matrix factorization, it leverages node features in order to learn an embedding function that generalizes to unseen nodes.
 
