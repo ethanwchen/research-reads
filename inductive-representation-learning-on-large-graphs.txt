@@ -1,0 +1,5 @@
+## GraphSAGE - Inductive Representation Learning on Large Graphs 
+
+### The Problem
+
+Most traditional 
